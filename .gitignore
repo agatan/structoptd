@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/structopt-d
+structopt-d.so
+structopt-d.dylib
+structopt-d.dll
+structopt-d.a
+structopt-d.lib
+structopt-d-test-*
+*.exe
+*.o
+*.obj
+*.lst
