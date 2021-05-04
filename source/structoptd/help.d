@@ -7,29 +7,30 @@ import std.algorithm : filter, joiner;
 import std.format : format;
 
 import structoptd.attribute;
-import structoptd.flag;
+import structoptd.option;
 
 /// putHelpMessage puts the help message of the command to the OutputRange.
-public void putHelpMessage(Opt, T)(T w) if (isOption!Opt && isOutputRange!(T, char))
+public void putHelpMessage(Cmd, T)(T w)
+        if (isCommand!Cmd && isOutputRange!(T, char))
 {
-    enum opt = getStructopt!Opt;
-    w ~= opt.name;
-    if (opt.about != "")
+    enum cmd = getCommand!Cmd;
+    w ~= cmd.name;
+    if (cmd.about != "")
     {
-        w ~= format!" %s"(opt.about);
+        w ~= format!" %s"(cmd.about);
     }
     w ~= '\n';
     w ~= "USAGE:\n";
-    w ~= format!"%s [OPTIONS]\n\n"(opt.name);
+    w ~= format!"%s [OPTIONS]\n\n"(cmd.name);
     w ~= "FLAGS:
     -h, --help      Prints help information
     -V, --version   Prints version information
 ";
-    alias flags = getFlags!Opt;
-    putOptions(w, flags);
+    alias options = getOptions!Cmd;
+    putOptions(w, options);
 }
 
-private void putOptions(T)(T w, immutable Flag[] options)
+private void putOptions(T)(T w, immutable Option[] options)
         if (isOutputRange!(T, char))
 {
     if (options.length == 0)
@@ -58,12 +59,12 @@ private void putOptions(T)(T w, immutable Flag[] options)
 
 unittest
 {
-    @structopt("example", "An example of structopt usage") struct Opt
+    @command("example", "An example of structopt usage") struct Opt
     {
-        @flag!(short_, long_) string name;
-        @flag!(short_('o'), long_) string output;
-        @flag!(short_('d')) string diff;
-        @flag!(long_) string input;
+        @option!(short_, long_) string name;
+        @option!(short_('o'), long_) string output;
+        @option!(short_('d')) string diff;
+        @option!(long_) string input;
     }
 
     static assert(!is(typeof(parseArgs!int([]))));

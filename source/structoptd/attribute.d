@@ -7,8 +7,8 @@ import std.format : format;
 import std.meta : Filter;
 import std.traits : hasUDA, getUDAs, isInstanceOf, TemplateArgsOf;
 
-/// structopt is used as UDA that describe name and usage of the application.
-public struct structopt
+/// command is used as UDA that describe name and usage of the application.
+public struct command
 {
     /// program name
     string name;
@@ -18,12 +18,12 @@ public struct structopt
     string about = "";
 }
 
-/// Return true if the type T has structopt attribute.
-public enum isOption(T) = hasUDA!(T, structopt);
-/// Return a structopt attribute.
-public enum getStructopt(T) = getUDAs!(T, structopt)[0];
+/// Return true if the type T has a command attribute.
+public enum isCommand(T) = hasUDA!(T, command);
+/// Return a command attribute.
+public enum getCommand(T) = getUDAs!(T, command)[0];
 
-public struct flag(T...)
+public struct option(T...)
 {
 }
 

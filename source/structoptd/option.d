@@ -1,4 +1,4 @@
-module structoptd.flag;
+module structoptd.option;
 
 @safe:
 
@@ -9,8 +9,8 @@ import std.conv : to;
 import std.typecons : Nullable;
 import std.traits : getUDAs, TemplateArgsOf, isInstanceOf, getSymbolsByUDA;
 
-/// Flag is an internal representation of the flag.
-public struct Flag
+/// Option is an internal representation of the option.
+public struct Option
 {
     ///
     string short_;
@@ -20,38 +20,38 @@ public struct Flag
     string fieldName;
 }
 
-/// Extract @flag attributed fields.
-public Flag[] getFlags(T)() if (isOption!T)
+/// Extract @option attributed fields.
+public Option[] getOptions(T)() if (isCommand!T)
 {
-    Flag[] flags;
-    static foreach (memberName; getSymbolsByUDA!(T, flag))
+    Option[] options;
+    static foreach (memberName; getSymbolsByUDA!(T, option))
     {
-        flags ~= parseFlagAttribute!(memberName.stringof, T);
+        options ~= parseOptionAttribute!(memberName.stringof, T);
     }
-    return flags;
+    return options;
 }
 
 unittest
 {
-    @structopt struct Test
+    @command struct Test
     {
-        @flag!(short_) string shortFlag;
-        @flag!(short_, long_) string bothShortLong;
+        @option!(short_) string shortOption;
+        @option!(short_, long_) string bothShortLong;
         bool shouldBeIgnored;
     }
 
-    enum flags = getFlags!Test;
-    static assert(flags == [
-            Flag("-s", null, "shortFlag"),
-            Flag("-b", "--bothShortLong", "bothShortLong"),
+    enum options = getOptions!Test;
+    static assert(options == [
+            Option("-s", null, "shortOption"),
+            Option("-b", "--bothShortLong", "bothShortLong"),
             ]);
 }
 
-private Flag parseFlagAttribute(alias memberName, T)() if (isOption!T)
+private Option parseOptionAttribute(alias memberName, T)() if (isCommand!T)
 {
-    alias FlagOptions = TemplateArgsOf!(getUDAs!(__traits(getMember, T, memberName), flag)[0]);
-    Flag f = {fieldName: memberName};
-    static foreach (opt; FlagOptions)
+    alias Options = TemplateArgsOf!(getUDAs!(__traits(getMember, T, memberName), option)[0]);
+    Option f = {fieldName: memberName};
+    static foreach (opt; Options)
     {
         static if (is(opt : long_))
         {
@@ -75,18 +75,18 @@ private Flag parseFlagAttribute(alias memberName, T)() if (isOption!T)
 
 unittest
 {
-    @structopt struct Test
+    @command struct Test
     {
-        @flag!short_ string shortFlagWithDefault;
-        @flag!long_ string longFlagWithDefault;
-        @flag!(short_('x')) string shortFlag;
-        @flag!(long_("long")) string longFlag;
+        @option!short_ string shortOptionWithDefault;
+        @option!long_ string longOptionWithDefault;
+        @option!(short_('x')) string shortOption;
+        @option!(long_("long")) string longOption;
     }
 
-    static assert(parseFlagAttribute!("shortFlagWithDefault",
-            Test) == Flag("-s", null, "shortFlagWithDefault"));
-    static assert(parseFlagAttribute!("longFlagWithDefault",
-            Test) == Flag(null, "--longFlagWithDefault", "longFlagWithDefault"));
-    static assert(parseFlagAttribute!("shortFlag", Test) == Flag("-x", null, "shortFlag"));
-    static assert(parseFlagAttribute!("longFlag", Test) == Flag(null, "--long", "longFlag"));
+    static assert(parseOptionAttribute!("shortOptionWithDefault",
+            Test) == Option("-s", null, "shortOptionWithDefault"));
+    static assert(parseOptionAttribute!("longOptionWithDefault",
+            Test) == Option(null, "--longOptionWithDefault", "longOptionWithDefault"));
+    static assert(parseOptionAttribute!("shortOption", Test) == Option("-x", null, "shortOption"));
+    static assert(parseOptionAttribute!("longOption", Test) == Option(null, "--long", "longOption"));
 }
