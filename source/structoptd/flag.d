@@ -20,12 +20,12 @@ public struct Flag
 }
 
 /// Extract @flag attributed fields.
-public Flag[] extractFlags(T)() if (isOption!T)
+public Flag[] getFlags(T)() if (isOption!T)
 {
     Flag[] flags;
     static foreach (memberName; getSymbolsByUDA!(T, flag))
     {
-        flags ~= newFlagOption!(memberName.stringof, T);
+        flags ~= parseFlagAttribute!(memberName.stringof, T);
     }
     return flags;
 }
@@ -39,14 +39,14 @@ unittest
         bool shouldBeIgnored;
     }
 
-    enum flags = extractFlags!Test;
+    enum flags = getFlags!Test;
     static assert(flags == [
             Flag("s", null, "shortFlag"),
             Flag("b", "bothShortLong", "bothShortLong"),
             ]);
 }
 
-private Flag newFlagOption(alias memberName, T)() if (isOption!T)
+private Flag parseFlagAttribute(alias memberName, T)() if (isOption!T)
 {
     alias FlagOptions = TemplateArgsOf!(getUDAs!(__traits(getMember, T, memberName), flag)[0]);
     Flag f = {fieldName: memberName};
@@ -82,10 +82,10 @@ unittest
         @flag!(long_("long")) string longFlag;
     }
 
-    static assert(newFlagOption!("shortFlagWithDefault", Test) == Flag("s",
+    static assert(parseFlagAttribute!("shortFlagWithDefault", Test) == Flag("s",
             null, "shortFlagWithDefault"));
-    static assert(newFlagOption!("longFlagWithDefault", Test) == Flag(null,
+    static assert(parseFlagAttribute!("longFlagWithDefault", Test) == Flag(null,
             "longFlagWithDefault", "longFlagWithDefault"));
-    static assert(newFlagOption!("shortFlag", Test) == Flag("x", null, "shortFlag"));
-    static assert(newFlagOption!("longFlag", Test) == Flag(null, "long", "longFlag"));
+    static assert(parseFlagAttribute!("shortFlag", Test) == Flag("x", null, "shortFlag"));
+    static assert(parseFlagAttribute!("longFlag", Test) == Flag(null, "long", "longFlag"));
 }
