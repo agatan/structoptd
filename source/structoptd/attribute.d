@@ -18,38 +18,35 @@ public struct structopt
     string about = "";
 }
 
-/// Return true if the type T has StructOpt attribute.
+/// Return true if the type T has structopt attribute.
 public enum isOption(T) = hasUDA!(T, structopt);
-/// Return a StructOpt attribute.
-public enum getStructOpt(T) = getUDAs!(T, structopt)[0];
+/// Return a structopt attribute.
+public enum getStructopt(T) = getUDAs!(T, structopt)[0];
 
-/// dotfm 0.1.3
-// USAGE:
-// dotfm [OPTIONS] <SUBCOMMAND>
-//
-// FLAGS:
-// -h, --help       Prints help information
-// -V, --version    Prints version information
-//
-// OPTIONS:
-// -p, --path <path>     [default: /Users/agatan/dotfiles]
-//
-// SUBCOMMANDS:
-// clean     Clean symbolic links
-// clone     Clone your dotfiles repository
-// commit    Add all dirty files, then create a commit
-// edit      Edit your files
-// git       Execute git command in dotfiles directory
-// help      Prints this message or the help of the given subcommand(s)
-// link      Link dotfiles
-// list      List target files
-// status    Show dotfiles status
-// sync      Sync local and remote dotfiles
+public struct flag(T...)
+{
+}
+
+/// short_ is used as UDA that enables short style syntax.
+public struct short_
+{
+    /// The character for the flag.
+    /// By default, the first character of the option field is used as a flag.
+    char name;
+}
+
+/// long_ is used as UDA that enables long style syntax.
+public struct long_
+{
+    /// The name for the flag.
+    /// By default, the name of the option field is used as a flag.
+    string name = "";
+}
 
 string helpMessage(T)() if (isOption!T)
 {
     auto w = appender!string();
-    enum opt = getStructOpt!T;
+    enum opt = getStructopt!T;
     w ~= opt.name;
     if (opt.about != "")
     {
@@ -67,9 +64,9 @@ string helpMessage(T)() if (isOption!T)
 
 unittest
 {
-    @structopt("example", "An example of StructOpt usage") struct Opt
+    @structopt("example", "An example of structopt usage") struct Opt
     {
-        string name;
+        @short_ @long_ string name;
     }
 
     static assert(!is(typeof(parseArgs!int([]))));
