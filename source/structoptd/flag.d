@@ -4,6 +4,7 @@ module structoptd.flag;
 
 import structoptd.attribute;
 
+import std.format : format;
 import std.conv : to;
 import std.typecons : Nullable;
 import std.traits : getUDAs, TemplateArgsOf, isInstanceOf, getSymbolsByUDA;
@@ -41,8 +42,8 @@ unittest
 
     enum flags = getFlags!Test;
     static assert(flags == [
-            Flag("s", null, "shortFlag"),
-            Flag("b", "bothShortLong", "bothShortLong"),
+            Flag("-s", null, "shortFlag"),
+            Flag("-b", "--bothShortLong", "bothShortLong"),
             ]);
 }
 
@@ -54,19 +55,19 @@ private Flag parseFlagAttribute(alias memberName, T)() if (isOption!T)
     {
         static if (is(opt : long_))
         {
-            f.long_ = memberName;
+            f.long_ = "--" ~ memberName;
         }
         else static if (is(typeof(opt) : long_))
         {
-            f.long_ = opt.name;
+            f.long_ = "--" ~ opt.name;
         }
         else static if (is(opt : short_))
         {
-            f.short_ = memberName[0].to!string;
+            f.short_ = format!"-%s"(memberName[0]);
         }
         else static if (is(typeof(opt) : short_))
         {
-            f.short_ = opt.name.to!string();
+            f.short_ = format!"-%s"(opt.name);
         }
     }
     return f;
@@ -82,10 +83,10 @@ unittest
         @flag!(long_("long")) string longFlag;
     }
 
-    static assert(parseFlagAttribute!("shortFlagWithDefault", Test) == Flag("s",
-            null, "shortFlagWithDefault"));
-    static assert(parseFlagAttribute!("longFlagWithDefault", Test) == Flag(null,
-            "longFlagWithDefault", "longFlagWithDefault"));
-    static assert(parseFlagAttribute!("shortFlag", Test) == Flag("x", null, "shortFlag"));
-    static assert(parseFlagAttribute!("longFlag", Test) == Flag(null, "long", "longFlag"));
+    static assert(parseFlagAttribute!("shortFlagWithDefault",
+            Test) == Flag("-s", null, "shortFlagWithDefault"));
+    static assert(parseFlagAttribute!("longFlagWithDefault",
+            Test) == Flag(null, "--longFlagWithDefault", "longFlagWithDefault"));
+    static assert(parseFlagAttribute!("shortFlag", Test) == Flag("-x", null, "shortFlag"));
+    static assert(parseFlagAttribute!("longFlag", Test) == Flag(null, "--long", "longFlag"));
 }
