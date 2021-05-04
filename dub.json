@@ -5,5 +5,6 @@
 	"copyright": "Copyright © 2021, Naomichi Agata",
 	"description": "Command Line Argument Parser derived from struct definitions.",
 	"license": "MIT",
-	"name": "structopt-d"
+	"name": "structoptd",
+  "targetType": "library"
 }
