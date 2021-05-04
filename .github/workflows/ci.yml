@@ -25,6 +25,5 @@ jobs:
       - name: dub test
         run: dub test --parallel -b=unittest-cov
       - name: codecov
-        if: ${{ matrix.compiler == 'dmd' }}
-        run: |
-          bash <(curl -s https://codecov.io/bash)
+        if: ${{ matrix.compiler == 'dmd-latest' }}
+        run: bash <(curl -s https://codecov.io/bash)
