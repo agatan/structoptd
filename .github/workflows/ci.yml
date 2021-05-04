@@ -1,0 +1,30 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        compiler: [dmd-latest, ldc-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.dub
+          key: ${{ runner.os }}-dub-${{ hashFiles('**/dub.json') }}
+          restore-keys: |
+            ${{ runner.os }}-dub-
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.compiler }}
+      - name: dub test
+        run: dub test --parallel -b=unittest-cov
+      - name: codecov
+        if: ${{ matrix.compiler == 'dmd' }}
+        run: |
+          bash <(curl -s https://codecov.io/bash)
