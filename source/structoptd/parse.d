@@ -130,7 +130,8 @@ public T parseOrThrow(T)(string[] argv) if (isCommand!T)
                 if ((!flag.short_.isNull && arg == flag.short_.get)
                         || (!flag.long_.isNull && arg == flag.long_.get))
                 {
-                    __traits(getMember, result, flag.fieldName) = true;
+                    alias DstType = typeof(__traits(getMember, result, flag.fieldName));
+                    __traits(getMember, result, flag.fieldName) = true.to!DstType;
                     continue loop;
                 }
             }
@@ -234,6 +235,22 @@ unittest
     assert(!parseOrThrow!Example([]).verbose);
     assert(parseOrThrow!Example(["-v"]).verbose);
     assert(parseOrThrow!Example(["--verbose"]).verbose);
+}
+
+/// ditto
+unittest
+{
+    import std.typecons : Flag, Yes, No;
+
+    @command("example", "0.0.1", "about message")
+    struct Example
+    {
+        @argument!(short_, long_) Flag!"verbose" verbose;
+    }
+
+    assert(parseOrThrow!Example([]).verbose == No.verbose);
+    assert(parseOrThrow!Example(["-v"]).verbose == Yes.verbose);
+    assert(parseOrThrow!Example(["--verbose"]).verbose == Yes.verbose);
 }
 
 /// ditto

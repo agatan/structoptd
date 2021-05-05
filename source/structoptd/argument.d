@@ -108,13 +108,18 @@ private Argument parseArgumentAttribute(alias memberName, T)() if (isCommand!T)
         {
             f.short_ = format!"-%s"(opt.name);
         }
-        f.isFlag = is(typeof(__traits(getMember, T.init, memberName)) : bool);
+        {
+            alias DstType = typeof(__traits(getMember, T.init, memberName));
+            f.isFlag = is(DstType : bool) || is(isInstanceOf!(DstType, Flag));
+        }
     }
     return f;
 }
 
 unittest
 {
+    import std.typecons : Flag;
+
     @command struct Test
     {
         @argument!short_ string shortArgumentWithDefault;
@@ -122,6 +127,7 @@ unittest
         @argument!(short_('x')) string shortArgument;
         @argument!(long_("long")) string longArgument;
         @argument!short_ bool verbose;
+        @argument!(short_, long_("debug")) Flag!"debug" debug_;
     }
 
     static assert(parseArgumentAttribute!("shortArgumentWithDefault",
@@ -134,4 +140,6 @@ unittest
             Test) == Argument(Nullable!string.init, "--long".nullable, "longArgument"));
     static assert(parseArgumentAttribute!("verbose",
             Test) == Argument("-v".nullable, Nullable!string.init, "verbose", true));
+    static assert(parseArgumentAttribute!("debug_",
+            Test) == Argument("-d".nullable, "--debug".nullable, "debug_", true));
 }
