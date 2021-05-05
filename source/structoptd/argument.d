@@ -21,9 +21,16 @@ public struct Argument
     /// true if the argument does not take values. (e.g. -v)
     bool isFlag;
 
+    /// true if the argument is a positional.
     bool isPositional() const
     {
         return (short_.get("") == "") && (long_.get("") == "");
+    }
+
+    /// true if the argument take values as option.
+    bool isOption() const
+    {
+        return !isFlag && !isPositional;
     }
 }
 
@@ -80,6 +87,7 @@ private Argument parseArgumentAttribute(alias memberName, T)() if (isCommand!T)
     }
     return f;
 }
+
 unittest
 {
     @command struct Test
