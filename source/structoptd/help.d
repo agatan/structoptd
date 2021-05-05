@@ -39,17 +39,17 @@ private void putArguments(T)(T w, immutable Argument[] arguments)
     foreach (argument; arguments)
     {
         w ~= "    ";
-        if (argument.short_.length > 0)
+        if (!argument.short_.isNull)
         {
-            w ~= argument.short_;
-            if (argument.long_.length > 0)
+            w ~= argument.short_.get;
+            if (!argument.long_.isNull)
             {
                 w ~= ", ";
             }
         }
-        if (argument.long_.length > 0)
+        if (!argument.long_.isNull)
         {
-            w ~= argument.long_;
+            w ~= argument.long_.get;
         }
         w ~= " <";
         w ~= argument.fieldName;

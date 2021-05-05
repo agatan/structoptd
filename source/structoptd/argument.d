@@ -6,18 +6,25 @@ import structoptd.attribute;
 
 import std.format : format;
 import std.conv : to;
-import std.typecons : Nullable;
+import std.typecons : Nullable, nullable;
 import std.traits : getUDAs, TemplateArgsOf, isInstanceOf, getSymbolsByUDA;
 
 /// Argument is an internal representation of the argument.
 public struct Argument
 {
     ///
-    string short_;
+    Nullable!string short_;
     ///
-    string long_;
+    Nullable!string long_;
     ///
     string fieldName;
+    /// true if the argument does not take values. (e.g. -v)
+    bool isFlag;
+
+    bool isPositional() const
+    {
+        return (short_.get("") == "") && (long_.get("") == "");
+    }
 }
 
 /// Extract @argument attributed fields.
@@ -42,8 +49,8 @@ unittest
 
     enum arguments = getArguments!Test;
     static assert(arguments == [
-            Argument("-s", null, "shortArgument"),
-            Argument("-b", "--bothShortLong", "bothShortLong"),
+            Argument("-s".nullable, Nullable!string.init, "shortArgument"),
+            Argument("-b".nullable, "--bothShortLong".nullable, "bothShortLong"),
             ]);
 }
 
@@ -69,10 +76,10 @@ private Argument parseArgumentAttribute(alias memberName, T)() if (isCommand!T)
         {
             f.short_ = format!"-%s"(opt.name);
         }
+        f.isFlag = is(typeof(__traits(getMember, T.init, memberName)) : bool);
     }
     return f;
 }
-
 unittest
 {
     @command struct Test
@@ -81,12 +88,17 @@ unittest
         @argument!long_ string longArgumentWithDefault;
         @argument!(short_('x')) string shortArgument;
         @argument!(long_("long")) string longArgument;
+        @argument!short_ bool verbose;
     }
 
     static assert(parseArgumentAttribute!("shortArgumentWithDefault",
-            Test) == Argument("-s", null, "shortArgumentWithDefault"));
-    static assert(parseArgumentAttribute!("longArgumentWithDefault",
-            Test) == Argument(null, "--longArgumentWithDefault", "longArgumentWithDefault"));
-    static assert(parseArgumentAttribute!("shortArgument", Test) == Argument("-x", null, "shortArgument"));
-    static assert(parseArgumentAttribute!("longArgument", Test) == Argument(null, "--long", "longArgument"));
+            Test) == Argument("-s".nullable, Nullable!string.init, "shortArgumentWithDefault"));
+    static assert(parseArgumentAttribute!("longArgumentWithDefault", Test) == Argument(Nullable!string.init,
+            "--longArgumentWithDefault".nullable, "longArgumentWithDefault"));
+    static assert(parseArgumentAttribute!("shortArgument",
+            Test) == Argument("-x".nullable, Nullable!string.init, "shortArgument"));
+    static assert(parseArgumentAttribute!("longArgument",
+            Test) == Argument(Nullable!string.init, "--long".nullable, "longArgument"));
+    static assert(parseArgumentAttribute!("verbose",
+            Test) == Argument("-v".nullable, Nullable!string.init, "verbose", true));
 }
