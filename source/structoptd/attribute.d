@@ -23,7 +23,7 @@ public enum isCommand(T) = hasUDA!(T, command);
 /// Return a command attribute.
 public enum getCommand(T) = getUDAs!(T, command)[0];
 
-public struct option(T...)
+public struct argument(T...)
 {
 }
 
