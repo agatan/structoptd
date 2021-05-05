@@ -10,17 +10,27 @@ import std.format : format;
 import structoptd.attribute;
 import structoptd.argument;
 
+/// putVersion puts the version information of the command.
+public void putVersion(Cmd, T)(T w) if (isCommand!Cmd && isOutputRange!(T, char))
+{
+    enum cmd = getCommand!Cmd;
+    w.put(cmd.name);
+    w.put(" ");
+    w.put(cmd.version_);
+    w.put("\n");
+}
+
 /// putHelpMessage puts the help message of the command to the OutputRange.
 public void putHelpMessage(Cmd, T)(T w)
         if (isCommand!Cmd && isOutputRange!(T, char))
 {
     enum cmd = getCommand!Cmd;
-    w ~= cmd.name;
+    w.put(cmd.name);
     if (cmd.about != "")
     {
-        w ~= format!" %s"(cmd.about);
+        w.put(format!" %s"(cmd.about));
     }
-    w ~= '\n';
+    w.put('\n');
     alias arguments = getArguments!Cmd;
     putUsage(w, cmd, arguments);
     putFlags(w, arguments.flags);
@@ -70,25 +80,32 @@ Args:
     assert(w.data == expected, w.data);
 }
 
-private void putUsage(T)(T w, const command cmd, const Arguments arguments)
+/// putUsage puts the usage of the command to the OutputRange.
+public void putUsage(Cmd, T)(T w) if (isOutputRange!(T, char) && isCommand!Cmd)
+{
+    putUsage(w, getCommand!Cmd, getArguments!Cmd);
+}
+
+/// ditto
+public void putUsage(T)(T w, const command cmd, const Arguments arguments)
         if (isOutputRange!(T, char))
 {
-    w ~= "USAGE:\n    ";
-    w ~= cmd.name;
+    w.put("USAGE:\n    ");
+    w.put(cmd.name);
     if (!arguments.flags.empty)
     {
-        w ~= " [FLAGS]";
+        w.put(" [FLAGS]");
     }
     if (!arguments.options.empty)
     {
-        w ~= " [OPTIONS]"; // TODO: required options.
+        w.put(" [OPTIONS]"); // TODO: required options.
     }
     if (!arguments.positionalArguments.empty)
     {
-        w ~= " ";
-        w ~= arguments.positionalArguments.map!((a) => format!"<%s>"(a.fieldName)).joiner(" ");
+        w.put(" ");
+        w.put(arguments.positionalArguments.map!((a) => format!"<%s>"(a.fieldName)).joiner(" "));
     }
-    w ~= "\n";
+    w.put("\n");
 }
 
 private void putOptions(T)(T w, const Argument[] arguments)
@@ -102,25 +119,25 @@ do
     const options = arguments.filter!((a) => a.isOption).array;
     if (options.length == 0)
         return;
-    w ~= "\nOPTIONS:\n";
+    w.put("\nOPTIONS:\n");
     foreach (option; options)
     {
-        w ~= "    ";
+        w.put("    ");
         if (!option.short_.isNull)
         {
-            w ~= option.short_.get;
+            w.put(option.short_.get);
             if (!option.long_.isNull)
             {
-                w ~= ", ";
+                w.put(", ");
             }
         }
         if (!option.long_.isNull)
         {
-            w ~= option.long_.get;
+            w.put(option.long_.get);
         }
-        w ~= " <";
-        w ~= option.fieldName;
-        w ~= ">\n";
+        w.put(" <");
+        w.put(option.fieldName);
+        w.put(">\n");
     }
 }
 
@@ -133,26 +150,26 @@ in
 do
 {
     const flags = arguments.filter!((a) => a.isFlag).array;
-    w ~= "\nFLAGS:
+    w.put("\nFLAGS:
     -h, --help      Prints help information
     -V, --version   Prints version information
-";
+");
     foreach (flag; flags)
     {
-        w ~= "    ";
+        w.put("    ");
         if (!flag.short_.isNull)
         {
-            w ~= flag.short_.get;
+            w.put(flag.short_.get);
             if (!flag.long_.isNull)
             {
-                w ~= ", ";
+                w.put(", ");
             }
         }
         if (!flag.long_.isNull)
         {
-            w ~= flag.long_.get;
+            w.put(flag.long_.get);
         }
-        w ~= "\n";
+        w.put("\n");
     }
 }
 
@@ -167,11 +184,11 @@ do
     const posArgs = arguments.filter!((a) => a.isPositional).array;
     if (posArgs.length == 0)
         return;
-    w ~= "\nArgs:\n";
+    w.put("\nArgs:\n");
     foreach (posArg; posArgs)
     {
-        w ~= "    <";
-        w ~= posArg.fieldName;
-        w ~= ">\n";
+        w.put("    <");
+        w.put(posArg.fieldName);
+        w.put(">\n");
     }
 }
