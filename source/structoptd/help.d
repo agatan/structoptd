@@ -2,8 +2,8 @@ module structoptd.help;
 
 @safe:
 
-import std.range : isOutputRange;
-import std.algorithm : filter, joiner, all;
+import std.range : isOutputRange, empty;
+import std.algorithm : filter, joiner, all, map;
 import std.array : array;
 import std.format : format;
 
@@ -21,9 +21,8 @@ public void putHelpMessage(Cmd, T)(T w)
         w ~= format!" %s"(cmd.about);
     }
     w ~= '\n';
-    w ~= "USAGE:\n";
-    w ~= format!"%s [OPTIONS]\n\n"(cmd.name);
     alias arguments = getArguments!Cmd;
+    putUsage(w, cmd, arguments);
     putFlags(w, arguments.flags);
     putOptions(w, arguments.options);
     putPositionalArguments(w, arguments.positionalArguments);
@@ -51,7 +50,7 @@ unittest
 
     immutable expected = `example
 USAGE:
-example [OPTIONS]
+    example [FLAGS] [OPTIONS] <arg1> <arg2>
 
 FLAGS:
     -h, --help      Prints help information
@@ -69,6 +68,27 @@ Args:
     <arg2>
 `;
     assert(w.data == expected, w.data);
+}
+
+private void putUsage(T)(T w, const command cmd, const Arguments arguments)
+        if (isOutputRange!(T, char))
+{
+    w ~= "USAGE:\n    ";
+    w ~= cmd.name;
+    if (!arguments.flags.empty)
+    {
+        w ~= " [FLAGS]";
+    }
+    if (!arguments.options.empty)
+    {
+        w ~= " [OPTIONS]"; // TODO: required options.
+    }
+    if (!arguments.positionalArguments.empty)
+    {
+        w ~= " ";
+        w ~= arguments.positionalArguments.map!((a) => format!"<%s>"(a.fieldName)).joiner(" ");
+    }
+    w ~= "\n";
 }
 
 private void putOptions(T)(T w, const Argument[] arguments)
@@ -113,7 +133,7 @@ in
 do
 {
     const flags = arguments.filter!((a) => a.isFlag).array;
-    w ~= "FLAGS:
+    w ~= "\nFLAGS:
     -h, --help      Prints help information
     -V, --version   Prints version information
 ";
