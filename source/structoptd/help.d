@@ -3,7 +3,7 @@ module structoptd.help;
 @safe:
 
 import std.range : isOutputRange;
-import std.algorithm : filter, joiner;
+import std.algorithm : filter, joiner, all;
 import std.array : array;
 import std.format : format;
 
@@ -24,9 +24,9 @@ public void putHelpMessage(Cmd, T)(T w)
     w ~= "USAGE:\n";
     w ~= format!"%s [OPTIONS]\n\n"(cmd.name);
     alias arguments = getArguments!Cmd;
-    putFlags(w, arguments);
-    putOptions(w, arguments);
-    putPositionalArguments(w, arguments);
+    putFlags(w, arguments.flags);
+    putOptions(w, arguments.options);
+    putPositionalArguments(w, arguments.positionalArguments);
 }
 
 unittest
@@ -73,6 +73,11 @@ Args:
 
 private void putOptions(T)(T w, const Argument[] arguments)
         if (isOutputRange!(T, char))
+in
+{
+    assert(arguments.all!"a.isOption");
+}
+do
 {
     const options = arguments.filter!((a) => a.isOption).array;
     if (options.length == 0)
@@ -101,6 +106,11 @@ private void putOptions(T)(T w, const Argument[] arguments)
 
 private void putFlags(T)(T w, const Argument[] arguments)
         if (isOutputRange!(T, char))
+in
+{
+    assert(arguments.all!"a.isFlag");
+}
+do
 {
     const flags = arguments.filter!((a) => a.isFlag).array;
     w ~= "FLAGS:
@@ -128,9 +138,15 @@ private void putFlags(T)(T w, const Argument[] arguments)
 
 private void putPositionalArguments(T)(T w, const Argument[] arguments)
         if (isOutputRange!(T, char))
+in
+{
+    assert(arguments.all!"a.isPositional");
+}
+do
 {
     const posArgs = arguments.filter!((a) => a.isPositional).array;
-    if (posArgs.length == 0) return;
+    if (posArgs.length == 0)
+        return;
     w ~= "\nArgs:\n";
     foreach (posArg; posArgs)
     {

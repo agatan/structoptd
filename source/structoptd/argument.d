@@ -9,6 +9,13 @@ import std.conv : to;
 import std.typecons : Nullable, nullable;
 import std.traits : getUDAs, TemplateArgsOf, isInstanceOf, getSymbolsByUDA;
 
+public struct Arguments
+{
+    Argument[] flags;
+    Argument[] options;
+    Argument[] positionalArguments;
+}
+
 /// Argument is an internal representation of the argument.
 public struct Argument
 {
@@ -35,12 +42,30 @@ public struct Argument
 }
 
 /// Extract @argument attributed fields.
-public Argument[] getArguments(T)() if (isCommand!T)
+public Arguments getArguments(T)() if (isCommand!T)
 {
-    Argument[] arguments;
+    Arguments arguments;
     static foreach (memberName; getSymbolsByUDA!(T, argument))
     {
-        arguments ~= parseArgumentAttribute!(memberName.stringof, T);
+        {
+            const arg = parseArgumentAttribute!(memberName.stringof, T);
+            if (arg.isFlag)
+            {
+                arguments.flags ~= arg;
+            }
+            else if (arg.isOption)
+            {
+                arguments.options ~= arg;
+            }
+            else if (arg.isPositional)
+            {
+                arguments.positionalArguments ~= arg;
+            }
+            else
+            {
+                assert(false, "unreachable");
+            }
+        }
     }
     return arguments;
 }
@@ -55,7 +80,7 @@ unittest
     }
 
     enum arguments = getArguments!Test;
-    static assert(arguments == [
+    static assert(arguments.options == [
             Argument("-s".nullable, Nullable!string.init, "shortArgument"),
             Argument("-b".nullable, "--bothShortLong".nullable, "bothShortLong"),
             ]);
